@@ -1,6 +1,6 @@
-# Number Matching Game Multiplayer
+# Risk Awareness Program 2025
 
-Game Number Matching Multiplayer adalah permainan mencari pasangan angka pada grid (default **10x10**, bisa diubah ke ukuran lain) yang dimainkan oleh 2 pemain secara real-time melalui web. Game ini juga mendukung spectator (penonton) yang dapat menyaksikan jalannya pertandingan.
+Risk Awareness Program 2025 adalah permainan mencari pasangan angka pada grid (default **10x10**, bisa diubah ke ukuran lain) yang dimainkan oleh 2 pemain secara real-time melalui web. Game ini juga mendukung spectator (penonton) yang dapat menyaksikan jalannya pertandingan.
 
 ## Fitur
 - Grid angka acak (default 10x10, bisa diubah di kode)
