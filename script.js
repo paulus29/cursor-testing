@@ -17,6 +17,13 @@ const playersDisplay = document.getElementById('players-display');
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('start-btn');
 const spectatorInfo = document.getElementById('spectator-info');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalJoin = document.getElementById('modal-join');
+const modalJoinForm = document.getElementById('modal-join-form');
+const modalPlayerName = document.getElementById('modal-player-name');
+const modalWin = document.getElementById('modal-win');
+const modalWinTitle = document.getElementById('modal-win-title');
+const modalWinClose = document.getElementById('modal-win-close');
 
 let socket = null;
 let playerNum = null;
@@ -27,6 +34,7 @@ let playerName = '';
 let timerInterval = null;
 let lastTimer = 10;
 let role = 'spectator';
+let selectedIndexes = [];
 
 roomForm.onsubmit = (e) => {
   e.preventDefault();
@@ -51,6 +59,39 @@ function joinRoom(room, name) {
   });
 }
 
+function showJoinModal() {
+  modalOverlay.style.display = '';
+  modalJoin.style.display = '';
+  modalPlayerName.value = '';
+  modalPlayerName.focus();
+}
+function hideJoinModal() {
+  modalOverlay.style.display = 'none';
+  modalJoin.style.display = 'none';
+}
+modalJoinForm.onsubmit = (e) => {
+  e.preventDefault();
+  const name = modalPlayerName.value.trim();
+  if (name) {
+    hideJoinModal();
+    roomForm.style.display = '';
+    playerNameInput.value = name;
+    playerNameInput.readOnly = true;
+    roomIdInput.focus();
+  }
+};
+
+function showWinModal(msg) {
+  modalOverlay.style.display = '';
+  modalWin.style.display = '';
+  modalWinTitle.textContent = msg;
+}
+function hideWinModal() {
+  modalOverlay.style.display = 'none';
+  modalWin.style.display = 'none';
+}
+modalWinClose.onclick = hideWinModal;
+
 function setupSocketEvents() {
   socket.on('update', (newState) => {
     state = newState;
@@ -68,6 +109,7 @@ function setupSocketEvents() {
     gameMessage.textContent = msg;
     gameOver = true;
     stopTimer();
+    showWinModal(msg);
   });
   socket.on('playerLeft', () => {
     gameMessage.textContent = 'Player lain keluar. Game berakhir.';
@@ -94,9 +136,20 @@ function renderPlayers() {
 
 function renderBoard() {
   board.innerHTML = '';
+  selectedIndexes = [];
+  if (state && state.started && !gameOver) {
+    // Highlight kotak yang sedang dipilih
+    if (state.firstPick !== undefined && state.firstPick !== null) selectedIndexes.push(state.firstPick);
+    if (state.secondPick !== undefined && state.secondPick !== null) selectedIndexes.push(state.secondPick);
+  }
   for (let i = 0; i < totalCells; i++) {
     const cell = document.createElement('div');
     cell.className = 'cell';
+    // Highlight kotak terpilih
+    if (selectedIndexes.includes(i)) {
+      if (state.currentPlayer === 1) cell.classList.add('selected-p1');
+      else if (state.currentPlayer === 2) cell.classList.add('selected-p2');
+    }
     if (state.matched[i]) {
       cell.classList.add('matched');
       cell.textContent = state.numbers[i];
