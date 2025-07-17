@@ -14,6 +14,10 @@ Game Number Matching Multiplayer adalah permainan mencari pasangan angka pada gr
 - Modal input nama saat join dan modal pengumuman pemenang
 - Spectator dapat menonton jalannya game secara real-time
 
+## Package yang Diperlukan
+- [express](https://www.npmjs.com/package/express)
+- [socket.io](https://www.npmjs.com/package/socket.io)
+
 ## Cara Menjalankan
 
 ### 1. Install Node.js
@@ -22,7 +26,7 @@ Pastikan Node.js sudah terinstall di komputer Anda.
 ### 2. Install Dependency
 Buka terminal di folder project, jalankan:
 ```bash
-npm install
+npm install express socket.io
 ```
 
 ### 3. Jalankan Server
