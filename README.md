@@ -1,9 +1,9 @@
 # Number Matching Game Multiplayer
 
-Game Number Matching Multiplayer adalah permainan mencari pasangan angka pada grid (default 4x4, bisa diubah ke 10x10) yang dimainkan oleh 2 pemain secara real-time melalui web. Game ini juga mendukung spectator (penonton) yang dapat menyaksikan jalannya pertandingan.
+Game Number Matching Multiplayer adalah permainan mencari pasangan angka pada grid (default **10x10**, bisa diubah ke ukuran lain) yang dimainkan oleh 2 pemain secara real-time melalui web. Game ini juga mendukung spectator (penonton) yang dapat menyaksikan jalannya pertandingan.
 
 ## Fitur
-- Grid angka acak (default 4x4, bisa diubah di kode)
+- Grid angka acak (default 10x10, bisa diubah di kode)
 - 2 pemain bermain secara bergantian
 - Setiap giliran, pemain memilih 2 kotak untuk mencari pasangan angka
 - Jika cocok, pasangan tetap terbuka dan pemain dapat giliran lagi
@@ -44,7 +44,7 @@ Server akan berjalan di `http://localhost:3000`
 
 ## Catatan
 - Untuk main di dua komputer berbeda, pastikan berada di jaringan yang sama dan akses dengan alamat IP server (misal: `http://192.168.1.10:3000`)
-- Jika ingin mengembalikan ke 10x10, ubah `boardSize` di backend dan grid CSS ke 10.
+- Jika ingin mengubah ukuran grid, ubah `boardSize` di backend dan grid CSS sesuai keinginan.
 
 ---
 
