@@ -81,8 +81,13 @@ function renderPlayers() {
   if (!state || !state.playerNames) return;
   for (let i = 0; i < 2; i++) {
     const div = document.createElement('div');
-    div.className = 'player-name' + (state.currentPlayer === i + 1 ? ' active' : '');
+    div.className = 'player-name' + (state.currentPlayer === i + 1 && state.started ? ' active' : '');
     div.textContent = state.playerNames[i] || `Player ${i + 1}`;
+    // Skor besar di bawah nama
+    const scoreDiv = document.createElement('div');
+    scoreDiv.className = 'player-score';
+    scoreDiv.textContent = state.scores[i] || 0;
+    div.appendChild(scoreDiv);
     playersDisplay.appendChild(div);
   }
 }
@@ -114,8 +119,7 @@ function pickCell(index) {
 }
 
 function updateScores() {
-  player1Score.textContent = `${state.playerNames?.[0] || 'Player 1'}: ${state.scores[0]}`;
-  player2Score.textContent = `${state.playerNames?.[1] || 'Player 2'}: ${state.scores[1]}`;
+  // Tidak perlu skor kecil di scoreboard, sudah ada di bawah nama
 }
 
 function updateTurn() {
@@ -156,6 +160,11 @@ function updateSpectatorInfo() {
 
 function startTimer(timeLeft) {
   stopTimer();
+  if (!state || !state.started) {
+    timerDisplay.style.display = 'none';
+    return;
+  }
+  timerDisplay.style.display = '';
   lastTimer = typeof timeLeft === 'number' ? timeLeft : 10;
   timerDisplay.textContent = `⏰ ${lastTimer}s`;
   timerInterval = setInterval(() => {
