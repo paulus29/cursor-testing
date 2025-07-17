@@ -23,9 +23,10 @@ Game Number Matching Multiplayer adalah permainan mencari pasangan angka pada gr
 ### 1. Install Node.js
 Pastikan Node.js sudah terinstall di komputer Anda.
 
-### 2. Install Dependency
+### 2. Inisialisasi Project dan Install Dependency
 Buka terminal di folder project, jalankan:
 ```bash
+npm init -y
 npm install express socket.io
 ```
 
