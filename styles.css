@@ -53,3 +53,25 @@ h1 {
   margin-bottom: 20px;
   cursor: pointer;
 }
+
+#players-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 40px;
+}
+.player-name {
+  font-size: 2em;
+  font-weight: bold;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: #e0e0e0;
+  color: #333;
+  transition: background 0.2s, color 0.2s;
+}
+.player-name.active {
+  background: #1976d2;
+  color: #fff;
+  box-shadow: 0 0 8px #1976d2;
+}

@@ -17,6 +17,7 @@ const rooms = {};
 const boardSize = 10;
 const totalCells = boardSize * boardSize;
 const totalPairs = totalCells / 2;
+const TURN_TIME = 10; // seconds
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -40,15 +41,54 @@ function createRoom(roomId) {
     scores: [0, 0],
     currentPlayer: 1,
     players: [], // socket.id
+    playerNames: [null, null],
     firstPick: null,
     secondPick: null,
     lockBoard: false,
+    timer: TURN_TIME,
+    timerObj: null,
   };
+}
+
+function startTurnTimer(roomId) {
+  const room = rooms[roomId];
+  if (!room) return;
+  clearTurnTimer(roomId);
+  room.timer = TURN_TIME;
+  room.timerObj = setInterval(() => {
+    room.timer--;
+    io.to(roomId).emit('update', getPublicState(roomId));
+    if (room.timer <= 0) {
+      clearTurnTimer(roomId);
+      // Lempar giliran
+      if (!room.lockBoard && room.firstPick === null && room.secondPick === null) {
+        room.currentPlayer = room.currentPlayer === 1 ? 2 : 1;
+        io.to(roomId).emit('update', getPublicState(roomId));
+        startTurnTimer(roomId);
+      } else if (!room.lockBoard && room.firstPick !== null && room.secondPick === null) {
+        // Jika sudah pick 1, reset pick dan lempar giliran
+        room.revealed[room.firstPick] = false;
+        room.firstPick = null;
+        room.currentPlayer = room.currentPlayer === 1 ? 2 : 1;
+        io.to(roomId).emit('update', getPublicState(roomId));
+        startTurnTimer(roomId);
+      }
+    }
+  }, 1000);
+}
+
+function clearTurnTimer(roomId) {
+  const room = rooms[roomId];
+  if (room && room.timerObj) {
+    clearInterval(room.timerObj);
+    room.timerObj = null;
+  }
 }
 
 io.on('connection', (socket) => {
   // Create or join room
-  socket.on('joinRoom', (roomId, callback) => {
+  socket.on('joinRoom', (data, callback) => {
+    const { roomId, name } = data;
     if (!rooms[roomId]) {
       createRoom(roomId);
     }
@@ -58,11 +98,16 @@ io.on('connection', (socket) => {
       return;
     }
     room.players.push(socket.id);
+    room.playerNames[room.players.length - 1] = name;
     socket.join(roomId);
     const playerNum = room.players.length;
     callback({ success: true, playerNum, roomId });
     // Send initial state
     io.to(roomId).emit('update', getPublicState(roomId));
+    // Start timer if 2 players
+    if (room.players.length === 2) {
+      startTurnTimer(roomId);
+    }
   });
 
   // Handle cell click
@@ -74,10 +119,14 @@ io.on('connection', (socket) => {
     if (room.firstPick === null) {
       room.revealed[index] = true;
       room.firstPick = index;
+      room.timer = TURN_TIME; // reset timer after pick
+      io.to(roomId).emit('update', getPublicState(roomId));
     } else if (room.secondPick === null && index !== room.firstPick) {
       room.revealed[index] = true;
       room.secondPick = index;
       room.lockBoard = true;
+      clearTurnTimer(roomId);
+      io.to(roomId).emit('update', getPublicState(roomId));
       setTimeout(() => {
         if (room.numbers[room.firstPick] === room.numbers[room.secondPick]) {
           room.matched[room.firstPick] = true;
@@ -95,10 +144,12 @@ io.on('connection', (socket) => {
         // Check for game end
         if (room.matched.filter(Boolean).length === totalCells) {
           io.to(roomId).emit('gameOver', getWinnerMessage(room));
+          clearTurnTimer(roomId);
+        } else {
+          startTurnTimer(roomId);
         }
       }, 800);
     }
-    io.to(roomId).emit('update', getPublicState(roomId));
   });
 
   // Handle disconnect
@@ -108,7 +159,9 @@ io.on('connection', (socket) => {
       const idx = room.players.indexOf(socket.id);
       if (idx !== -1) {
         room.players.splice(idx, 1);
+        room.playerNames[idx] = null;
         io.to(roomId).emit('playerLeft');
+        clearTurnTimer(roomId);
         // Optionally, delete room if empty
         if (room.players.length === 0) {
           delete rooms[roomId];
@@ -127,12 +180,14 @@ function getPublicState(roomId) {
     scores: room.scores,
     currentPlayer: room.currentPlayer,
     lockBoard: room.lockBoard,
+    playerNames: room.playerNames,
+    timer: room.timer,
   };
 }
 
 function getWinnerMessage(room) {
-  if (room.scores[0] > room.scores[1]) return 'Player 1 wins!';
-  if (room.scores[1] > room.scores[0]) return 'Player 2 wins!';
+  if (room.scores[0] > room.scores[1]) return `${room.playerNames[0] || 'Player 1'} wins!`;
+  if (room.scores[1] > room.scores[0]) return `${room.playerNames[1] || 'Player 2'} wins!`;
   return "It's a draw!";
 }
 
