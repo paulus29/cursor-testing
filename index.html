@@ -3,18 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Number Matching Game 10x10</title>
+  <title>Number Matching Game 10x10 Multiplayer</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Number Matching Game 10x10</h1>
-  <div class="scoreboard">
-    <span id="player1-score">Player 1: 0</span>
-    <span id="player2-score">Player 2: 0</span>
-    <span id="turn-indicator">Turn: Player 1</span>
+  <h1>Number Matching Game 10x10 (Multiplayer)</h1>
+  <div id="room-section">
+    <form id="room-form">
+      <input type="text" id="room-id" placeholder="Enter Room Code" maxlength="10" required>
+      <button type="submit">Join/Create Room</button>
+    </form>
+    <div id="room-status"></div>
   </div>
-  <div id="game-board" class="grid"></div>
-  <button id="reset-btn">Reset Game</button>
+  <div id="game-section" style="display:none;">
+    <div class="scoreboard">
+      <span id="player1-score">Player 1: 0</span>
+      <span id="player2-score">Player 2: 0</span>
+      <span id="turn-indicator">Turn: Player 1</span>
+    </div>
+    <div id="game-board" class="grid"></div>
+    <div id="game-message"></div>
+    <button id="reset-btn" style="display:none;">Reset Game</button>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
