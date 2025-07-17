@@ -47,6 +47,9 @@ function createRoom(roomId) {
     lockBoard: false,
     timer: TURN_TIME,
     timerObj: null,
+    started: false,
+    ready: [false, false], // player 1 & 2 ready
+    spectators: [], // socket.id
   };
 }
 
@@ -93,19 +96,31 @@ io.on('connection', (socket) => {
       createRoom(roomId);
     }
     const room = rooms[roomId];
-    if (room.players.length >= 2) {
-      callback({ success: false, message: 'Room full' });
-      return;
+    let role = 'spectator';
+    let playerNum = null;
+    if (room.players.length < 2) {
+      room.players.push(socket.id);
+      room.playerNames[room.players.length - 1] = name;
+      playerNum = room.players.length;
+      role = 'player';
+    } else {
+      room.spectators.push(socket.id);
     }
-    room.players.push(socket.id);
-    room.playerNames[room.players.length - 1] = name;
     socket.join(roomId);
-    const playerNum = room.players.length;
-    callback({ success: true, playerNum, roomId });
-    // Send initial state
+    callback({ success: true, playerNum, roomId, role });
     io.to(roomId).emit('update', getPublicState(roomId));
-    // Start timer if 2 players
-    if (room.players.length === 2) {
+  });
+
+  // Player ready (start)
+  socket.on('playerReady', ({ roomId, playerNum }) => {
+    const room = rooms[roomId];
+    if (!room || !playerNum) return;
+    room.ready[playerNum - 1] = true;
+    io.to(roomId).emit('update', getPublicState(roomId));
+    // Start game only if both ready and not started
+    if (room.ready[0] && room.ready[1] && !room.started) {
+      room.started = true;
+      io.to(roomId).emit('update', getPublicState(roomId));
       startTurnTimer(roomId);
     }
   });
@@ -113,13 +128,13 @@ io.on('connection', (socket) => {
   // Handle cell click
   socket.on('pickCell', ({ roomId, index, playerNum }) => {
     const room = rooms[roomId];
-    if (!room || room.lockBoard || room.players[playerNum - 1] !== socket.id) return;
+    if (!room || !room.started || room.lockBoard || room.players[playerNum - 1] !== socket.id) return;
     if (room.revealed[index] || room.matched[index]) return;
     if (room.currentPlayer !== playerNum) return;
     if (room.firstPick === null) {
       room.revealed[index] = true;
       room.firstPick = index;
-      room.timer = TURN_TIME; // reset timer after pick
+      // timer TIDAK di-reset di sini
       io.to(roomId).emit('update', getPublicState(roomId));
     } else if (room.secondPick === null && index !== room.firstPick) {
       room.revealed[index] = true;
@@ -146,7 +161,7 @@ io.on('connection', (socket) => {
           io.to(roomId).emit('gameOver', getWinnerMessage(room));
           clearTurnTimer(roomId);
         } else {
-          startTurnTimer(roomId);
+          startTurnTimer(roomId); // timer baru setelah 2 kotak dipilih
         }
       }, 800);
     }
@@ -156,14 +171,24 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     for (const roomId in rooms) {
       const room = rooms[roomId];
-      const idx = room.players.indexOf(socket.id);
+      let idx = room.players.indexOf(socket.id);
       if (idx !== -1) {
         room.players.splice(idx, 1);
         room.playerNames[idx] = null;
-        io.to(roomId).emit('playerLeft');
+        room.ready[idx] = false;
+        room.started = false;
         clearTurnTimer(roomId);
-        // Optionally, delete room if empty
-        if (room.players.length === 0) {
+        io.to(roomId).emit('update', getPublicState(roomId));
+        io.to(roomId).emit('playerLeft');
+        if (room.players.length === 0 && room.spectators.length === 0) {
+          delete rooms[roomId];
+        }
+        break;
+      }
+      idx = room.spectators.indexOf(socket.id);
+      if (idx !== -1) {
+        room.spectators.splice(idx, 1);
+        if (room.players.length === 0 && room.spectators.length === 0) {
           delete rooms[roomId];
         }
         break;
@@ -182,6 +207,10 @@ function getPublicState(roomId) {
     lockBoard: room.lockBoard,
     playerNames: room.playerNames,
     timer: room.timer,
+    started: room.started,
+    ready: room.ready,
+    playerCount: room.players.length,
+    spectatorCount: room.spectators.length,
   };
 }
 

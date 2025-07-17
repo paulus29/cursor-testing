@@ -15,6 +15,8 @@ const gameSection = document.getElementById('game-section');
 const gameMessage = document.getElementById('game-message');
 const playersDisplay = document.getElementById('players-display');
 const timerDisplay = document.getElementById('timer');
+const startBtn = document.getElementById('start-btn');
+const spectatorInfo = document.getElementById('spectator-info');
 
 let socket = null;
 let playerNum = null;
@@ -24,6 +26,7 @@ let gameOver = false;
 let playerName = '';
 let timerInterval = null;
 let lastTimer = 10;
+let role = 'spectator';
 
 roomForm.onsubmit = (e) => {
   e.preventDefault();
@@ -37,7 +40,8 @@ function joinRoom(room, name) {
     if (res.success) {
       playerNum = res.playerNum;
       roomId = res.roomId;
-      roomStatus.textContent = `Joined room: ${roomId} as ${name} (Player ${playerNum})`;
+      role = res.role;
+      roomStatus.textContent = `Joined room: ${roomId} as ${name} (${role === 'player' ? 'Player ' + playerNum : 'Spectator'})`;
       roomSection.style.display = 'none';
       gameSection.style.display = '';
       setupSocketEvents();
@@ -54,6 +58,8 @@ function setupSocketEvents() {
     renderBoard();
     updateScores();
     updateTurn();
+    updateStartButton();
+    updateSpectatorInfo();
     gameMessage.textContent = '';
     gameOver = false;
     startTimer(state.timer);
@@ -94,7 +100,7 @@ function renderBoard() {
       cell.textContent = state.numbers[i];
     } else {
       cell.textContent = '';
-      if (!gameOver && playerNum === state.currentPlayer && !state.lockBoard) {
+      if (!gameOver && role === 'player' && playerNum === state.currentPlayer && !state.lockBoard && state.started) {
         cell.addEventListener('click', () => pickCell(i));
       }
     }
@@ -103,7 +109,7 @@ function renderBoard() {
 }
 
 function pickCell(index) {
-  if (!state || gameOver) return;
+  if (!state || gameOver || !state.started) return;
   socket.emit('pickCell', { roomId, index, playerNum });
 }
 
@@ -115,9 +121,36 @@ function updateScores() {
 function updateTurn() {
   if (gameOver) {
     turnIndicator.textContent = 'Game Over';
+  } else if (!state.started) {
+    turnIndicator.textContent = 'Menunggu game dimulai...';
   } else {
     const name = state.playerNames?.[state.currentPlayer - 1] || `Player ${state.currentPlayer}`;
     turnIndicator.textContent = `Turn: ${name}`;
+  }
+}
+
+function updateStartButton() {
+  if (role === 'player' && playerNum && state.playerCount === 2 && !state.started) {
+    startBtn.style.display = '';
+    startBtn.disabled = !!state.ready[playerNum - 1];
+    startBtn.textContent = state.ready[playerNum - 1] ? 'Menunggu lawan...' : 'Start';
+  } else {
+    startBtn.style.display = 'none';
+  }
+}
+
+startBtn.onclick = () => {
+  if (role === 'player' && playerNum && !state.ready[playerNum - 1]) {
+    socket.emit('playerReady', { roomId, playerNum });
+  }
+};
+
+function updateSpectatorInfo() {
+  if (role === 'spectator') {
+    spectatorInfo.style.display = '';
+    spectatorInfo.textContent = `Anda menonton sebagai Spectator. Jumlah penonton: ${state.spectatorCount}`;
+  } else {
+    spectatorInfo.style.display = 'none';
   }
 }
 
