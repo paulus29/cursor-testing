@@ -23,7 +23,7 @@ function createRoom(roomId) {
   rooms[roomId] = {
     numbers,
     revealed: Array(totalCells).fill(false),
-    matched: Array(totalCells).fill(false),
+    matched: Array(totalCells).fill(null),
     scores: [0, 0],
     currentPlayer: 1,
     players: [],

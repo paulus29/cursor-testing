@@ -120,3 +120,13 @@ h1 {
   background: #b3e5fc !important;
   border: 2px solid #0288d1 !important;
 }
+.cell.matched-p1 {
+  background: #43a047 !important; /* hijau player 1 */
+  color: #fff;
+  border: 2px solid #2e7d32 !important;
+}
+.cell.matched-p2 {
+  background: #e53935 !important; /* merah player 2 */
+  color: #fff;
+  border: 2px solid #b71c1c !important;
+}

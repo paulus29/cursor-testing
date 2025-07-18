@@ -57,8 +57,8 @@ function registerGameSocket(io) {
         io.to(roomId).emit('update', gameController.getPublicState(roomId));
         setTimeout(() => {
           if (room.numbers[room.firstPick] === room.numbers[room.secondPick]) {
-            room.matched[room.firstPick] = true;
-            room.matched[room.secondPick] = true;
+            room.matched[room.firstPick] = room.currentPlayer;
+            room.matched[room.secondPick] = room.currentPlayer;
             room.scores[room.currentPlayer - 1]++;
           } else {
             room.revealed[room.firstPick] = false;

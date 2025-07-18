@@ -151,7 +151,13 @@ function renderBoard() {
       else if (state.currentPlayer === 2) cell.classList.add('selected-p2');
     }
     if (state.matched[i]) {
-      cell.classList.add('matched');
+      if (state.matched[i] === 1) {
+        cell.classList.add('matched-p1');
+      } else if (state.matched[i] === 2) {
+        cell.classList.add('matched-p2');
+      } else {
+        cell.classList.add('matched');
+      }
       cell.textContent = state.numbers[i];
     } else if (state.numbers[i] !== null) {
       cell.classList.add('revealed');
