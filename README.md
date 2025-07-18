@@ -18,38 +18,41 @@ Risk Awareness Program 2025 adalah permainan mencari pasangan angka pada grid (d
 - [express](https://www.npmjs.com/package/express)
 - [socket.io](https://www.npmjs.com/package/socket.io)
 
+## Struktur Folder Baru
+
+```
+/workspace
+│
+├── public/
+│   ├── index.html
+│   ├── styles.css
+│   └── script.js
+│
+├── src/
+│   ├── controllers/
+│   │   ├── gameController.js
+│   │   └── timerController.js
+│   ├── routes/
+│   │   └── gameRoutes.js
+│   ├── models/
+│   └── utils/
+│
+├── server.js
+├── package.json (jika ada)
+└── README.md
+```
+
 ## Cara Menjalankan
 
-### 1. Install Node.js
-Pastikan Node.js sudah terinstall di komputer Anda.
-
-### 2. Inisialisasi Project dan Install Dependency
-Buka terminal di folder project, jalankan:
-```bash
-npm init -y
-npm install express socket.io
-```
-
-### 3. Jalankan Server
-```bash
-node server.js
-```
-Server akan berjalan di `http://localhost:3000`
-
-### 4. Mainkan Game
-- Buka browser dan akses `http://localhost:3000`
-- Masukkan nama Anda pada modal yang muncul
-- Masukkan kode room (bebas, misal: `room1`) untuk membuat/join room
-- Jika sudah ada 2 pemain, user berikutnya otomatis menjadi spectator
-- Kedua pemain harus klik tombol **Start** untuk memulai game
-- Mainkan secara bergantian, spectator dapat menonton secara real-time
-
-### 5. Ubah Ukuran Grid
-- Untuk mengubah ukuran grid, edit variabel `boardSize` di file `server.js` dan grid CSS di `styles.css`
-
-## Catatan
-- Untuk main di dua komputer berbeda, pastikan berada di jaringan yang sama dan akses dengan alamat IP server (misal: `http://192.168.1.10:3000`)
-- Jika ingin mengubah ukuran grid, ubah `boardSize` di backend dan grid CSS sesuai keinginan.
+1. Install dependencies (jika belum):
+   ```bash
+   npm install express socket.io
+   ```
+2. Jalankan server:
+   ```bash
+   node server.js
+   ```
+3. Buka browser ke `http://localhost:3000`
 
 ---
 
