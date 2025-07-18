@@ -2,7 +2,7 @@
 const boardSize = 10;
 const totalCells = boardSize * boardSize;
 const totalPairs = totalCells / 2;
-const TURN_TIME = 10; // seconds
+const TURN_TIME = 5; // seconds
 
 const rooms = {};
 
