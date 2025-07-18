@@ -1,5 +1,5 @@
 // Game logic controller
-const boardSize = 10;
+const boardSize = 4;
 const totalCells = boardSize * boardSize;
 const totalPairs = totalCells / 2;
 const TURN_TIME = 5; // seconds
