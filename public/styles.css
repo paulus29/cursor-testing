@@ -116,6 +116,22 @@ h1 {
   background: #d32f2f;
 }
 
+.modal-content input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: opacity 0.2s;
+}
+
+.modal-content input[type="text"]:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 5px rgba(25, 118, 210, 0.3);
+}
+
 #players-display {
   display: flex;
   justify-content: center;

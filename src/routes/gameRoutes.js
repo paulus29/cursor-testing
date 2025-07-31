@@ -12,16 +12,22 @@ function registerGameSocket(io) {
       }
       const room = gameController.rooms[roomId];
       
-      // Check if player name already exists in the room
-      if (room.playerNames.includes(name)) {
-        callback({ success: false, error: 'Player name already exists in this room' });
-        return;
-      }
-      
       let role = 'spectator';
       let playerNum = null;
       
       if (requestedRole === 'player') {
+        // Validation for player
+        if (!name || name.trim() === '') {
+          callback({ success: false, error: 'Player name is required' });
+          return;
+        }
+        
+        // Check if player name already exists in the room
+        if (room.playerNames.includes(name)) {
+          callback({ success: false, error: 'Player name already exists in this room' });
+          return;
+        }
+        
         if (room.players.length < 2) {
           room.players.push(socket.id);
           room.playerNames[room.players.length - 1] = name;
@@ -33,7 +39,7 @@ function registerGameSocket(io) {
           return;
         }
       } else {
-        // User wants to be spectator
+        // User wants to be spectator - no name validation needed
         room.spectators.push(socket.id);
         role = 'spectator';
       }

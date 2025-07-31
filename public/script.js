@@ -6,9 +6,6 @@ const player1Score = document.getElementById('player1-score');
 const player2Score = document.getElementById('player2-score');
 const turnIndicator = document.getElementById('turn-indicator');
 const resetBtn = document.getElementById('reset-btn');
-const roomForm = document.getElementById('room-form');
-const roomIdInput = document.getElementById('room-id');
-const playerNameInput = document.getElementById('player-name');
 const roomStatus = document.getElementById('room-status');
 const roomSection = document.getElementById('room-section');
 const gameSection = document.getElementById('game-section');
@@ -20,6 +17,7 @@ const spectatorInfo = document.getElementById('spectator-info');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalJoin = document.getElementById('modal-join');
 const modalJoinForm = document.getElementById('modal-join-form');
+const modalRoomId = document.getElementById('modal-room-id');
 const modalPlayerName = document.getElementById('modal-player-name');
 const modalWin = document.getElementById('modal-win');
 const modalWinTitle = document.getElementById('modal-win-title');
@@ -37,12 +35,6 @@ let role = 'spectator';
 let selectedIndexes = [];
 let requestedRole = 'player';
 
-roomForm.onsubmit = (e) => {
-  e.preventDefault();
-  requestedRole = document.querySelector('input[name="role"]:checked').value;
-  joinRoom(roomIdInput.value.trim(), playerNameInput.value.trim(), requestedRole);
-};
-
 function joinRoom(room, name, requestedRole) {
   socket = io();
   playerName = name;
@@ -51,7 +43,10 @@ function joinRoom(room, name, requestedRole) {
       playerNum = res.playerNum;
       roomId = res.roomId;
       role = res.role;
-      roomStatus.textContent = `Joined room: ${roomId} as ${name} (${role === 'player' ? 'Player ' + playerNum : 'Spectator'})`;
+      const statusText = role === 'player' 
+        ? `Joined room: ${roomId} as ${name} (Player ${playerNum})`
+        : `Joined room: ${roomId} as Spectator`;
+      roomStatus.textContent = statusText;
       roomSection.style.display = 'none';
       gameSection.style.display = '';
       setupSocketEvents();
@@ -64,38 +59,68 @@ function joinRoom(room, name, requestedRole) {
 function showJoinModal() {
   modalOverlay.style.display = '';
   modalJoin.style.display = '';
+  modalRoomId.value = '';
   modalPlayerName.value = '';
   // Reset role selection to player
   document.querySelector('input[name="modal-role"][value="player"]').checked = true;
-  modalPlayerName.focus();
+  modalRoomId.focus();
+  
+  // Set up role change listener
+  setupRoleChangeListener();
 }
 function hideJoinModal() {
   modalOverlay.style.display = 'none';
   modalJoin.style.display = 'none';
 }
 
-function resetForm() {
-  roomForm.style.display = 'none';
-  playerNameInput.value = '';
-  playerNameInput.readOnly = false;
-  roomIdInput.value = '';
-  roomStatus.textContent = '';
-  // Reset role selection to player
-  document.querySelector('input[name="role"][value="player"]').checked = true;
+
+
+function setupRoleChangeListener() {
+  // Remove existing listeners
+  const roleInputs = document.querySelectorAll('input[name="modal-role"]');
+  roleInputs.forEach(input => {
+    input.removeEventListener('change', handleRoleChange);
+    input.addEventListener('change', handleRoleChange);
+  });
+  
+  // Initial setup
+  handleRoleChange();
+}
+
+function handleRoleChange() {
+  const selectedRole = document.querySelector('input[name="modal-role"]:checked').value;
+  const nameInput = document.getElementById('modal-player-name');
+  
+  if (selectedRole === 'spectator') {
+    nameInput.required = false;
+    nameInput.placeholder = 'Name (optional for spectator)';
+    nameInput.style.opacity = '0.6';
+  } else {
+    nameInput.required = true;
+    nameInput.placeholder = 'Enter Your Name';
+    nameInput.style.opacity = '1';
+  }
 }
 modalJoinForm.onsubmit = (e) => {
   e.preventDefault();
+  const roomId = modalRoomId.value.trim();
   const name = modalPlayerName.value.trim();
   const modalRole = document.querySelector('input[name="modal-role"]:checked').value;
-  if (name) {
-    hideJoinModal();
-    roomForm.style.display = 'block';
-    playerNameInput.value = name;
-    playerNameInput.readOnly = true;
-    // Set the role selection to match modal
-    document.querySelector(`input[name="role"][value="${modalRole}"]`).checked = true;
-    roomIdInput.focus();
+  
+  // Validation
+  if (!roomId) {
+    alert('Please enter room code');
+    return;
   }
+  
+  if (modalRole === 'player' && !name) {
+    alert('Please enter your name to join as player');
+    return;
+  }
+  
+  // Join room directly
+  joinRoom(roomId, name, modalRole);
+  hideJoinModal();
 };
 
 function showWinModal(msg) {
