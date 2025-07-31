@@ -14,14 +14,7 @@ const playersDisplay = document.getElementById('players-display');
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('start-btn');
 const spectatorInfo = document.getElementById('spectator-info');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalJoin = document.getElementById('modal-join');
-const modalJoinForm = document.getElementById('modal-join-form');
-const modalRoomId = document.getElementById('modal-room-id');
-const modalPlayerName = document.getElementById('modal-player-name');
-const modalWin = document.getElementById('modal-win');
-const modalWinTitle = document.getElementById('modal-win-title');
-const modalWinClose = document.getElementById('modal-win-close');
+
 
 let socket = null;
 let playerNum = null;
@@ -51,88 +44,99 @@ function joinRoom(room, name, requestedRole) {
       gameSection.style.display = '';
       setupSocketEvents();
     } else {
-      roomStatus.textContent = res.error || res.message || 'Failed to join room';
+      const errorMessage = res.error || res.message || 'Failed to join room';
+      roomStatus.textContent = errorMessage;
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     }
   });
 }
 
 function showJoinModal() {
-  modalOverlay.style.display = '';
-  modalJoin.style.display = '';
-  modalRoomId.value = '';
-  modalPlayerName.value = '';
-  // Reset role selection to player
-  document.querySelector('input[name="modal-role"][value="player"]').checked = true;
-  modalRoomId.focus();
-  
-  // Set up role change listener
-  setupRoleChangeListener();
-}
-function hideJoinModal() {
-  modalOverlay.style.display = 'none';
-  modalJoin.style.display = 'none';
-}
-
-
-
-function setupRoleChangeListener() {
-  // Remove existing listeners
-  const roleInputs = document.querySelectorAll('input[name="modal-role"]');
-  roleInputs.forEach(input => {
-    input.removeEventListener('change', handleRoleChange);
-    input.addEventListener('change', handleRoleChange);
+  Swal.fire({
+    title: 'Join Game',
+    html: `
+      <input id="swal-room-id" class="swal2-input" placeholder="Enter Room Code" maxlength="10">
+      <input id="swal-player-name" class="swal2-input" placeholder="Enter Your Name" maxlength="20">
+      <div class="role-selection" style="margin: 15px 0;">
+        <label style="margin-right: 20px;">
+          <input type="radio" name="swal-role" value="player" checked>
+          <span>Player</span>
+        </label>
+        <label>
+          <input type="radio" name="swal-role" value="spectator">
+          <span>Spectator</span>
+        </label>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Join Room',
+    cancelButtonText: 'Cancel',
+    focusConfirm: false,
+    preConfirm: () => {
+      const roomId = document.getElementById('swal-room-id').value.trim();
+      const playerName = document.getElementById('swal-player-name').value.trim();
+      const role = document.querySelector('input[name="swal-role"]:checked').value;
+      
+      // Validation
+      if (!roomId) {
+        Swal.showValidationMessage('Please enter room code');
+        return false;
+      }
+      
+      if (role === 'player' && !playerName) {
+        Swal.showValidationMessage('Please enter your name to join as player');
+        return false;
+      }
+      
+      return { roomId, playerName, role };
+    },
+    didOpen: () => {
+      // Set up role change listener
+      const roleInputs = document.querySelectorAll('input[name="swal-role"]');
+      const nameInput = document.getElementById('swal-player-name');
+      
+      roleInputs.forEach(input => {
+        input.addEventListener('change', () => {
+          const selectedRole = document.querySelector('input[name="swal-role"]:checked').value;
+          if (selectedRole === 'spectator') {
+            nameInput.required = false;
+            nameInput.placeholder = 'Name (optional for spectator)';
+            nameInput.style.opacity = '0.6';
+          } else {
+            nameInput.required = true;
+            nameInput.placeholder = 'Enter Your Name';
+            nameInput.style.opacity = '1';
+          }
+        });
+      });
+      
+      // Initial setup
+      nameInput.required = true;
+      nameInput.placeholder = 'Enter Your Name';
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const { roomId, playerName, role } = result.value;
+      joinRoom(roomId, playerName, role);
+    }
   });
-  
-  // Initial setup
-  handleRoleChange();
 }
 
-function handleRoleChange() {
-  const selectedRole = document.querySelector('input[name="modal-role"]:checked').value;
-  const nameInput = document.getElementById('modal-player-name');
-  
-  if (selectedRole === 'spectator') {
-    nameInput.required = false;
-    nameInput.placeholder = 'Name (optional for spectator)';
-    nameInput.style.opacity = '0.6';
-  } else {
-    nameInput.required = true;
-    nameInput.placeholder = 'Enter Your Name';
-    nameInput.style.opacity = '1';
-  }
-}
-modalJoinForm.onsubmit = (e) => {
-  e.preventDefault();
-  const roomId = modalRoomId.value.trim();
-  const name = modalPlayerName.value.trim();
-  const modalRole = document.querySelector('input[name="modal-role"]:checked').value;
-  
-  // Validation
-  if (!roomId) {
-    alert('Please enter room code');
-    return;
-  }
-  
-  if (modalRole === 'player' && !name) {
-    alert('Please enter your name to join as player');
-    return;
-  }
-  
-  // Join room directly
-  joinRoom(roomId, name, modalRole);
-  hideJoinModal();
-};
 
 function showWinModal(msg) {
-  modalOverlay.style.display = '';
-  modalWin.style.display = '';
-  modalWinTitle.textContent = msg;
+  Swal.fire({
+    title: 'Game Over!',
+    text: msg,
+    icon: 'success',
+    confirmButtonText: 'OK',
+    allowOutsideClick: false
+  });
 }
-function hideWinModal() {
-  modalOverlay.style.display = 'none';
-  modalWin.style.display = 'none';
-}
-modalWinClose.onclick = hideWinModal;
 
 function setupSocketEvents() {
   socket.on('update', (newState) => {
