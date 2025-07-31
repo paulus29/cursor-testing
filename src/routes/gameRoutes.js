@@ -6,7 +6,7 @@ function registerGameSocket(io) {
   io.on('connection', (socket) => {
     // Create or join room
     socket.on('joinRoom', (data, callback) => {
-      const { roomId, name } = data;
+      const { roomId, name, requestedRole } = data;
       if (!gameController.rooms[roomId]) {
         gameController.createRoom(roomId);
       }
@@ -20,14 +20,24 @@ function registerGameSocket(io) {
       
       let role = 'spectator';
       let playerNum = null;
-      if (room.players.length < 2) {
-        room.players.push(socket.id);
-        room.playerNames[room.players.length - 1] = name;
-        playerNum = room.players.length;
-        role = 'player';
+      
+      if (requestedRole === 'player') {
+        if (room.players.length < 2) {
+          room.players.push(socket.id);
+          room.playerNames[room.players.length - 1] = name;
+          playerNum = room.players.length;
+          role = 'player';
+        } else {
+          // Room is full, but user wanted to be player
+          callback({ success: false, error: 'Room is full. You can join as spectator instead.' });
+          return;
+        }
       } else {
+        // User wants to be spectator
         room.spectators.push(socket.id);
+        role = 'spectator';
       }
+      
       socket.join(roomId);
       callback({ success: true, playerNum, roomId, role });
       io.to(roomId).emit('update', gameController.getPublicState(roomId));

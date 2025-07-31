@@ -35,16 +35,18 @@ let timerInterval = null;
 let lastTimer = 10;
 let role = 'spectator';
 let selectedIndexes = [];
+let requestedRole = 'player';
 
 roomForm.onsubmit = (e) => {
   e.preventDefault();
-  joinRoom(roomIdInput.value.trim(), playerNameInput.value.trim());
+  requestedRole = document.querySelector('input[name="role"]:checked').value;
+  joinRoom(roomIdInput.value.trim(), playerNameInput.value.trim(), requestedRole);
 };
 
-function joinRoom(room, name) {
+function joinRoom(room, name, requestedRole) {
   socket = io();
   playerName = name;
-  socket.emit('joinRoom', { roomId: room, name }, (res) => {
+  socket.emit('joinRoom', { roomId: room, name, requestedRole }, (res) => {
     if (res.success) {
       playerNum = res.playerNum;
       roomId = res.roomId;
@@ -63,20 +65,35 @@ function showJoinModal() {
   modalOverlay.style.display = '';
   modalJoin.style.display = '';
   modalPlayerName.value = '';
+  // Reset role selection to player
+  document.querySelector('input[name="modal-role"][value="player"]').checked = true;
   modalPlayerName.focus();
 }
 function hideJoinModal() {
   modalOverlay.style.display = 'none';
   modalJoin.style.display = 'none';
 }
+
+function resetForm() {
+  roomForm.style.display = 'none';
+  playerNameInput.value = '';
+  playerNameInput.readOnly = false;
+  roomIdInput.value = '';
+  roomStatus.textContent = '';
+  // Reset role selection to player
+  document.querySelector('input[name="role"][value="player"]').checked = true;
+}
 modalJoinForm.onsubmit = (e) => {
   e.preventDefault();
   const name = modalPlayerName.value.trim();
+  const modalRole = document.querySelector('input[name="modal-role"]:checked').value;
   if (name) {
     hideJoinModal();
-    roomForm.style.display = '';
+    roomForm.style.display = 'block';
     playerNameInput.value = name;
     playerNameInput.readOnly = true;
+    // Set the role selection to match modal
+    document.querySelector(`input[name="role"][value="${modalRole}"]`).checked = true;
     roomIdInput.focus();
   }
 };

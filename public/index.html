@@ -10,10 +10,22 @@
   <h1>Risk Awareness Program 2025</h1>
   <h2 style="margin-top:0; margin-bottom:24px; font-weight:normal; color:#1976d2;">Stage 2 Final</h2>
   <div id="room-section">
-    <form id="room-form">
+    <button id="join-modal-btn" onclick="showJoinModal()" style="margin-bottom: 20px;">Join Game</button>
+    <form id="room-form" style="display:none;">
       <input type="text" id="room-id" placeholder="Enter Room Code" maxlength="10" required>
       <input type="text" id="player-name" placeholder="Enter Your Name" maxlength="20" required>
+      <div class="role-selection">
+        <label>
+          <input type="radio" name="role" value="player" checked>
+          <span>Player</span>
+        </label>
+        <label>
+          <input type="radio" name="role" value="spectator">
+          <span>Spectator</span>
+        </label>
+      </div>
       <button type="submit">Join/Create Room</button>
+      <button type="button" onclick="resetForm()" style="margin-left: 10px;">Reset</button>
     </form>
     <div id="room-status"></div>
   </div>
@@ -35,6 +47,16 @@
       <h2>Masukkan Nama Anda</h2>
       <form id="modal-join-form">
         <input type="text" id="modal-player-name" placeholder="Nama Anda" maxlength="20" required>
+        <div class="role-selection">
+          <label>
+            <input type="radio" name="modal-role" value="player" checked>
+            <span>Player</span>
+          </label>
+          <label>
+            <input type="radio" name="modal-role" value="spectator">
+            <span>Spectator</span>
+          </label>
+        </div>
         <button type="submit">Masuk</button>
       </form>
     </div>
