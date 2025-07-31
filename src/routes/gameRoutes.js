@@ -11,6 +11,13 @@ function registerGameSocket(io) {
         gameController.createRoom(roomId);
       }
       const room = gameController.rooms[roomId];
+      
+      // Check if player name already exists in the room
+      if (room.playerNames.includes(name)) {
+        callback({ success: false, error: 'Player name already exists in this room' });
+        return;
+      }
+      
       let role = 'spectator';
       let playerNum = null;
       if (room.players.length < 2) {
