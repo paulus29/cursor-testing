@@ -6,9 +6,6 @@ const player1Score = document.getElementById('player1-score');
 const player2Score = document.getElementById('player2-score');
 const turnIndicator = document.getElementById('turn-indicator');
 const resetBtn = document.getElementById('reset-btn');
-const roomForm = document.getElementById('room-form');
-const roomIdInput = document.getElementById('room-id');
-const playerNameInput = document.getElementById('player-name');
 const roomStatus = document.getElementById('room-status');
 const roomSection = document.getElementById('room-section');
 const gameSection = document.getElementById('game-section');
@@ -17,13 +14,7 @@ const playersDisplay = document.getElementById('players-display');
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('start-btn');
 const spectatorInfo = document.getElementById('spectator-info');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalJoin = document.getElementById('modal-join');
-const modalJoinForm = document.getElementById('modal-join-form');
-const modalPlayerName = document.getElementById('modal-player-name');
-const modalWin = document.getElementById('modal-win');
-const modalWinTitle = document.getElementById('modal-win-title');
-const modalWinClose = document.getElementById('modal-win-close');
+
 
 let socket = null;
 let playerNum = null;
@@ -35,62 +26,117 @@ let timerInterval = null;
 let lastTimer = 10;
 let role = 'spectator';
 let selectedIndexes = [];
+let requestedRole = 'player';
 
-roomForm.onsubmit = (e) => {
-  e.preventDefault();
-  joinRoom(roomIdInput.value.trim(), playerNameInput.value.trim());
-};
-
-function joinRoom(room, name) {
+function joinRoom(room, name, requestedRole) {
   socket = io();
   playerName = name;
-  socket.emit('joinRoom', { roomId: room, name }, (res) => {
+  socket.emit('joinRoom', { roomId: room, name, requestedRole }, (res) => {
     if (res.success) {
       playerNum = res.playerNum;
       roomId = res.roomId;
       role = res.role;
-      roomStatus.textContent = `Joined room: ${roomId} as ${name} (${role === 'player' ? 'Player ' + playerNum : 'Spectator'})`;
+      const statusText = role === 'player' 
+        ? `Joined room: ${roomId} as ${name} (Player ${playerNum})`
+        : `Joined room: ${roomId} as Spectator`;
+      roomStatus.textContent = statusText;
       roomSection.style.display = 'none';
       gameSection.style.display = '';
       setupSocketEvents();
     } else {
-      roomStatus.textContent = res.message;
+      const errorMessage = res.error || res.message || 'Failed to join room';
+      roomStatus.textContent = errorMessage;
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     }
   });
 }
 
 function showJoinModal() {
-  modalOverlay.style.display = '';
-  modalJoin.style.display = '';
-  modalPlayerName.value = '';
-  modalPlayerName.focus();
+  Swal.fire({
+    title: 'Join Game',
+    html: `
+      <input id="swal-room-id" class="swal2-input" placeholder="Enter Room Code" maxlength="10">
+      <input id="swal-player-name" class="swal2-input" placeholder="Enter Your Name" maxlength="20">
+      <div class="role-selection" style="margin: 15px 0;">
+        <label style="margin-right: 20px;">
+          <input type="radio" name="swal-role" value="player" checked>
+          <span>Player</span>
+        </label>
+        <label>
+          <input type="radio" name="swal-role" value="spectator">
+          <span>Spectator</span>
+        </label>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Join Room',
+    cancelButtonText: 'Cancel',
+    focusConfirm: false,
+    preConfirm: () => {
+      const roomId = document.getElementById('swal-room-id').value.trim();
+      const playerName = document.getElementById('swal-player-name').value.trim();
+      const role = document.querySelector('input[name="swal-role"]:checked').value;
+      
+      // Validation
+      if (!roomId) {
+        Swal.showValidationMessage('Please enter room code');
+        return false;
+      }
+      
+      if (role === 'player' && !playerName) {
+        Swal.showValidationMessage('Please enter your name to join as player');
+        return false;
+      }
+      
+      return { roomId, playerName, role };
+    },
+    didOpen: () => {
+      // Set up role change listener
+      const roleInputs = document.querySelectorAll('input[name="swal-role"]');
+      const nameInput = document.getElementById('swal-player-name');
+      
+      roleInputs.forEach(input => {
+        input.addEventListener('change', () => {
+          const selectedRole = document.querySelector('input[name="swal-role"]:checked').value;
+          if (selectedRole === 'spectator') {
+            nameInput.required = false;
+            nameInput.placeholder = 'Name (optional for spectator)';
+            nameInput.style.opacity = '0.6';
+          } else {
+            nameInput.required = true;
+            nameInput.placeholder = 'Enter Your Name';
+            nameInput.style.opacity = '1';
+          }
+        });
+      });
+      
+      // Initial setup
+      nameInput.required = true;
+      nameInput.placeholder = 'Enter Your Name';
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const { roomId, playerName, role } = result.value;
+      joinRoom(roomId, playerName, role);
+    }
+  });
 }
-function hideJoinModal() {
-  modalOverlay.style.display = 'none';
-  modalJoin.style.display = 'none';
-}
-modalJoinForm.onsubmit = (e) => {
-  e.preventDefault();
-  const name = modalPlayerName.value.trim();
-  if (name) {
-    hideJoinModal();
-    roomForm.style.display = '';
-    playerNameInput.value = name;
-    playerNameInput.readOnly = true;
-    roomIdInput.focus();
-  }
-};
+
 
 function showWinModal(msg) {
-  modalOverlay.style.display = '';
-  modalWin.style.display = '';
-  modalWinTitle.textContent = msg;
+  Swal.fire({
+    title: 'Game Over!',
+    text: msg,
+    icon: 'success',
+    confirmButtonText: 'OK',
+    allowOutsideClick: false
+  });
 }
-function hideWinModal() {
-  modalOverlay.style.display = 'none';
-  modalWin.style.display = 'none';
-}
-modalWinClose.onclick = hideWinModal;
 
 function setupSocketEvents() {
   socket.on('update', (newState) => {
