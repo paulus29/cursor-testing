@@ -54,7 +54,7 @@ function joinRoom(room, name) {
       gameSection.style.display = '';
       setupSocketEvents();
     } else {
-      roomStatus.textContent = res.message;
+      roomStatus.textContent = res.error || res.message || 'Failed to join room';
     }
   });
 }
